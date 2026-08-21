@@ -1,0 +1,42 @@
+<evaluation>
+  <qa_pair>
+    <question>Using only read-only Starshipit WMS tools, look up the warehouse product whose SKU is the first SKU returned on page 1 of a product search that matches a single exact catalogue item you have already confirmed exists. What is that product's WMS record id (not the SKU)?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Find the product you looked up by SKU, then open its inventory detail. How many distinct location rows are attached to that product in the detailed inventory response?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List inventory in location view, searching for a pick-face location name that exists in the account. What is that location's WMS location id?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List WMS jobs with status READY and type PICK, page 1, limit 25, paginated. How many jobs are in this first page?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>From the READY pick jobs list, take the first job. Open the standard job record (not the details view). What is that job's priority integer?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List purchase orders with status receivable. How many purchase orders are returned in that unpaginated list (or the limit you used if you had to cap it)?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List suppliers, then open the first supplier that has a non-empty name. What is that supplier's WMS id?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List locations with includeOccupancy true and a page size of 25. How many locations on page 1 have a type of PICK_FACE?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>List stock movements for a date window that is fully in the past and already closed in this warehouse (use startDate and endDate). How many movement rows are on page 1 with limit 50?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+  <qa_pair>
+    <question>Call whoami, then list products with page 1 and limit 1. What is the catalogue total_count (or equivalent total) reported for products or inventory, using the same source you can reproduce on a second read-only call?</question>
+    <answer>FILL_AFTER_CONNECTING</answer>
+  </qa_pair>
+</evaluation>
