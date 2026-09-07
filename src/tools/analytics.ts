@@ -21,6 +21,16 @@ const UserSchema = withResponseFormat({
   processTypes: z.string().optional()
 });
 
+const ClientReportSchema = withResponseFormat({
+  clientId: z.string().optional().describe("Limit to a client within the authenticated user's allowed client scope")
+});
+
+const ShippingEconomicsSchema = withResponseFormat({
+  startDate: z.string().optional().describe("YYYY-MM-DD or ISO instant ending in Z. Defaults to seven days before today."),
+  endDate: z.string().optional().describe("YYYY-MM-DD or ISO instant ending in Z. Defaults to today."),
+  clientId: z.string().optional()
+});
+
 const CogsSchema = withResponseFormat({
   startDate: z.string().optional().describe("YYYY-MM-DD or ISO instant"),
   endDate: z.string().optional().describe("YYYY-MM-DD or ISO instant"),
@@ -80,6 +90,46 @@ export function registerAnalyticsTools(server: McpServer): void {
         omitUndefined({ daysBack: params.daysBack, processTypes: params.processTypes })
       );
       return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, `Activity ${params.userName}`);
+    }
+  });
+
+  registerDefinedTool(server, {
+    name: "starshipit_wms_get_backlog_aging_report",
+    title: "Get Backlog Aging Report",
+    description: "Open WMS orders grouped by age, with remaining units, workflow state, hold/job blockers, and summary totals. Requires analytics.view.",
+    inputSchema: ClientReportSchema,
+    readOnly: true,
+    handler: async (params) => {
+      const data = await wmsGet<unknown>("/api/reports/backlog-aging", omitUndefined({ clientId: params.clientId }));
+      return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, "Backlog Aging Report");
+    }
+  });
+
+  registerDefinedTool(server, {
+    name: "starshipit_wms_get_slotting_utilization_report",
+    title: "Get Slotting Utilization Report",
+    description: "Pick-face, bulk-storage, and overflow location utilization, capacity, SKU-mixing, and inventory totals. Requires analytics.view.",
+    inputSchema: ClientReportSchema,
+    readOnly: true,
+    handler: async (params) => {
+      const data = await wmsGet<unknown>("/api/reports/slotting-utilization", omitUndefined({ clientId: params.clientId }));
+      return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, "Slotting Utilization Report");
+    }
+  });
+
+  registerDefinedTool(server, {
+    name: "starshipit_wms_get_shipping_economics_report",
+    title: "Get Shipping Economics Report",
+    description: "Shipment-level shipping cost, units, package coverage, and order-lifecycle matching for a bounded date period. Requires analytics.view. startDate must be before endDate.",
+    inputSchema: ShippingEconomicsSchema,
+    readOnly: true,
+    handler: async (params) => {
+      const data = await wmsGet<unknown>("/api/reports/shipping-economics", omitUndefined({
+        startDate: params.startDate,
+        endDate: params.endDate,
+        clientId: params.clientId
+      }));
+      return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, "Shipping Economics Report");
     }
   });
 

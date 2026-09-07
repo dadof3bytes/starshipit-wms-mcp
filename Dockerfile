@@ -13,7 +13,7 @@ ENV NODE_ENV=production
 ENV TRANSPORT=http
 ENV HOST=0.0.0.0
 ENV PORT=3000
-ENV STARSHIPIT_WMS_READ_ONLY=true
+ENV STARSHIPIT_WMS_READ_ONLY=false
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev
 COPY --from=build /app/dist ./dist

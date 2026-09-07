@@ -12,7 +12,7 @@ This server covers WMS only (`https://wms.starshipit.com`). Orders, labels, rate
 4. Paste the Starshipit **API key** from **Settings → API** for the WMS-enabled account.
 5. First test: ask Viktor to list the loaded tools, then pull inventory for a known SKU or READY pick jobs.
 
-Keep `STARSHIPIT_WMS_READ_ONLY=true` until write tools are reviewed. That hides receive, stock movements, pick/pack, stocktake, and other mutations.
+Write tools are enabled by default. Set `STARSHIPIT_WMS_READ_ONLY=true` to hide receive, stock movements, pick/pack, stocktake, and other mutations.
 
 ## Authentication
 
@@ -62,7 +62,7 @@ TRANSPORT=stdio STARSHIPIT_API_KEY=... node dist/index.js
 | `HOST` | Bind address. Use `127.0.0.1` locally and `0.0.0.0` in production |
 | `ALLOWED_HOSTS` | Comma-separated Host values allowed when binding publicly |
 | `STARSHIPIT_API_KEY` | Local fallback only. Viktor supplies the key per request |
-| `STARSHIPIT_WMS_READ_ONLY` | `true` hides and skips registration of write tools |
+| `STARSHIPIT_WMS_READ_ONLY` | `true` hides and skips registration of write tools (default: `false`) |
 
 ## Behaviour notes
 
@@ -76,11 +76,11 @@ TRANSPORT=stdio STARSHIPIT_API_KEY=... node dist/index.js
 
 ## Tool groups
 
-80 tools are registered when writes are enabled (79 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers the 34 read/lookup tools only.
+85 tools are registered when writes are enabled (84 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers the 38 read/lookup tools only.
 
-Read tools (always registered): whoami, inventory, products, locations, packages, jobs, suppliers, purchase orders, stock movements, allocations, pick/pack/putaway/kitting/replenishment reads, analytics.
+Read tools (always registered): whoami, inventory, products, locations, packages, jobs, suppliers, purchase orders, stock movements, allocations, pick/pack/putaway/kitting/replenishment reads, analytics, stocktake approval list.
 
-Write tools (hidden when `STARSHIPIT_WMS_READ_ONLY=true`): product/supplier/location/package mutations, PO create/receive, stock movements, job assign/pause/resume, pick/pack/putaway/replenish/kitting/stocktake.
+Write tools (hidden when `STARSHIPIT_WMS_READ_ONLY=true`): product/supplier/location/package mutations, PO create/receive, stock movements, job assign/pause/resume, pick/pack/putaway/replenish/kitting/stocktake submit and approval.
 
 The field-level contract is vendored from Starshipit as [`docs/wms-reference.json`](docs/wms-reference.json).
 
@@ -90,4 +90,4 @@ The field-level contract is vendored from Starshipit as [`docs/wms-reference.jso
 
 ## Deploy
 
-Build and run `node dist/index.js` with `TRANSPORT=http`, `HOST=0.0.0.0`, `ALLOWED_HOSTS` set to the public hostname, and `STARSHIPIT_WMS_READ_ONLY=true` until write access is approved. A sample Dockerfile is included for Coolify or any container host.
+Build and run `node dist/index.js` with `TRANSPORT=http`, `HOST=0.0.0.0`, and `ALLOWED_HOSTS` set to the public hostname. Writes are enabled by default (`STARSHIPIT_WMS_READ_ONLY=false`). A sample Dockerfile is included for Coolify or any container host.
