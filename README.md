@@ -83,7 +83,7 @@ Do **not** send `Ocp-Apim-Subscription-Key` on WMS calls. That header is for the
 
 ## Read-only mode
 
-**Writes are enabled by default** (`STARSHIPIT_WMS_READ_ONLY=false`). The server registers 85 tools including receive, pick/pack, stock movements, and stocktake mutations.
+**Writes are enabled by default** (`STARSHIPIT_WMS_READ_ONLY=false`). The server registers 86 tools including receive, pick/pack, stock movements, and stocktake mutations.
 
 To expose only read/lookup tools (38 tools), set:
 
@@ -156,7 +156,7 @@ Maintainer-only dev files: the `.agents/` directory holds local Cursor/agent ski
 
 ## Tool groups
 
-85 tools when writes are enabled (84 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers 38 read/lookup tools only.
+86 tools when writes are enabled (85 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers 38 read/lookup tools only.
 
 **Read tools (always registered):** whoami, inventory, products, locations, packages, jobs, suppliers, purchase orders, stock movements, allocations, pick/pack/putaway/kitting/replenishment reads, analytics, stocktake approval list.
 

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { wmsGet, wmsPost } from "../services/wms-client.js";
+import { wmsGet, wmsPost, wmsPut } from "../services/wms-client.js";
 import { IdSchema, PageSchema, omitToolMeta, omitUndefined, withResponseFormat } from "../schemas/common.js";
 import { ResponseFormat } from "../types.js";
 import { pickItems, registerDefinedTool, wrapList, wrapRecord } from "./helpers.js";
@@ -33,6 +33,24 @@ const CreateSchema = withResponseFormat({
   parentLocationId: z.string().nullable().optional(),
   childToteIds: z.array(z.string()).optional().describe("Tote IDs. Only valid for EQUIPMENT locations."),
   zoneId: z.string().nullable().optional()
+});
+
+const UpdateSchema = withResponseFormat({
+  id: IdSchema.describe("WMS location ID to update"),
+  name: z.string().min(1).describe("Required on every update. Send the existing name to keep it."),
+  type: z.string().optional().describe("Location type. Omit to keep the existing type."),
+  barcode: z.string().nullable().optional().describe("Omit to keep; null or empty string clears it."),
+  minCapacity: z.number().min(0).nullable().optional().describe("PICK_FACE only. Omit to keep; null clears."),
+  maxCapacity: z.number().min(0).nullable().optional().describe("PICK_FACE only. Must not be below minCapacity when both supplied."),
+  allowMixedClientStock: z.boolean().optional(),
+  visible: z.boolean().optional().describe("Setting false also removes default-stocktake status."),
+  setAsDefaultStocktake: z.boolean().optional(),
+  allowedProductIds: z.array(z.string()).optional().describe("Replaces allowed-product list for PICK_FACE or BULK_STORAGE. Empty array clears."),
+  sequence: z.number().int().min(0).nullable().optional().describe("PICK_FACE pick sequence. Omit to keep; null clears."),
+  parentLocationId: z.string().nullable().optional().describe("Parent EQUIPMENT ID for TOTE. Omit to keep; null clears."),
+  childToteIds: z.array(z.string()).optional().describe("Replaces attached totes for EQUIPMENT. Empty array detaches all."),
+  zoneId: z.string().nullable().optional().describe("Active zone ID. Omit to keep; null or empty string clears."),
+  priority: z.number().int().min(0).max(10).optional().describe("BULK_STORAGE priority 0-10. Other types use 0.")
 });
 
 export function registerLocationTools(server: McpServer): void {
@@ -90,6 +108,27 @@ Use includeOccupancy=true to see occupiedProductIds and totalQuantityOnHand.`,
     handler: async (params) => {
       const data = await wmsPost<unknown>("/api/location", omitUndefined(omitToolMeta(params)));
       return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, "Created Location");
+    }
+  });
+
+  registerDefinedTool(server, {
+    name: "starshipit_wms_update_location",
+    title: "Update WMS Location",
+    description: `Update a location by ID. Requires locations.manage permission. name is required on every update — re-read the location first and send the current name to keep it.
+
+Omitted optional fields are retained. Changing type clears type-dependent settings (capacities, allowed products, parent, child totes) per WMS rules.
+Re-read after a timeout before retrying.`,
+    inputSchema: UpdateSchema,
+    readOnly: false,
+    destructive: false,
+    idempotent: true,
+    handler: async (params) => {
+      const { id, response_format: _responseFormat, ...body } = params;
+      const data = await wmsPut<unknown>(
+        `/api/location/${encodeURIComponent(id)}`,
+        omitUndefined(body)
+      );
+      return wrapRecord(data, params.response_format ?? ResponseFormat.MARKDOWN, "Updated Location");
     }
   });
 }
