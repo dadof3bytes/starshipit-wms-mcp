@@ -20,7 +20,7 @@ Args:
 Returns:
   Whether the key can read inventory, plus the first product summary if present.
 
-Use when: confirming Viktor or Inspector is authenticated before other tools.
+Use when: confirming your MCP client is authenticated before other tools.
 Do not use when: you already have a product ID and need stock detail (use starshipit_wms_get_inventory).
 
 Error Handling:
