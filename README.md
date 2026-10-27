@@ -148,7 +148,8 @@ Maintainer-only dev files: the `.agents/` directory holds local Cursor/agent ski
 
 - Developer API access is limited to **2 requests per second**. The client serializes outbound WMS calls and retries `429` with backoff.
 - Follow-up actions need **record IDs**, not SKUs, barcodes, location names, or order numbers.
-- Use `quantityAvailable` for stock decisions, not only `quantityOnHand`.
+- Use `quantityAvailable` for stock decisions, not only `quantityOnHand`. Product inventory rows also include nullable `safetyStock` (the Shopify buffer). It is reported separately and does not reduce `quantityAvailable`. Location rows include `quantityMovable`, which also does not change `quantityAvailable`.
+- Product updates can set `safetyStock`. `commerceWritebackDisabledByProvider` changes writeback for every store of one provider. `commerceWritebackDisabledByLinkId` changes one `productCommerceLinks` connection by its id.
 - Writes have **no idempotency keys**. Re-read before retrying. `409` means warehouse state changed.
 - Receiving can return HTTP 200 with `"success": false`. That is treated as a tool error.
 - Pause and resume jobs only through the dedicated tools, not `starshipit_wms_update_job`.
@@ -156,11 +157,11 @@ Maintainer-only dev files: the `.agents/` directory holds local Cursor/agent ski
 
 ## Tool groups
 
-86 tools when writes are enabled (85 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers 38 read/lookup tools only.
+87 tools when writes are enabled (86 WMS operations plus `starshipit_wms_whoami`). `STARSHIPIT_WMS_READ_ONLY=true` registers 38 read/lookup tools only.
 
 **Read tools (always registered):** whoami, inventory, products, locations, packages, jobs, suppliers, purchase orders, stock movements, allocations, pick/pack/putaway/kitting/replenishment reads, analytics, stocktake approval list.
 
-**Write tools (hidden when `STARSHIPIT_WMS_READ_ONLY=true`):** product/supplier/location/package mutations, PO create/receive, stock movements, job assign/pause/resume, pick/pack/putaway/replenish/kitting/stocktake submit and approval.
+**Write tools (hidden when `STARSHIPIT_WMS_READ_ONLY=true`):** product/supplier/location/package mutations, PO create/receive, stock movements, job assign/pause/resume, pick/pack/putaway/replenish/kitting/stocktake submit and approval, Shopify inventory writeback.
 
 Tool schemas follow the Starshipit WMS API. A vendored snapshot lives in [`docs/wms-reference.json`](docs/wms-reference.json); the [live reference](https://support.starshipit.com/developers/api-reference/wms/reference.json) is authoritative when they differ.
 
@@ -209,6 +210,37 @@ Check `GET /health` for `"read_only"`. Set `STARSHIPIT_WMS_READ_ONLY=true` and r
 ## Evaluations
 
 [`evals/evaluation.xml`](evals/evaluation.xml) holds 10 independent read-only questions for maintainer testing. Fill answers against a live WMS account before running evaluation scripts. Prefer IDs and stable master-data facts over stock quantities.
+
+## Changelog
+
+### 27 October 2026
+
+**Inventory**
+
+- `starshipit_wms_list_inventory` reports `safetyStock` (the Shopify buffer) on product rows. It stays separate from `quantityAvailable`. A null buffer is shown as `unset`.
+- Product rows also surface `preOrder`, `quantityUnavailable`, `leadTimeDays`, `unitCost`, `inventoryValue`, barcode, and unit of measure when WMS sends them.
+- Location rows include `quantityMovable` and replenishment reservations. `quantityMovable` is the figure for a physical move.
+- List responses keep the account restocking settings: `restockingAnalysisWindowDays`, `restockingLeadTimeDays`, and `restockingMinimumDailyBurnRate`.
+- New list filters: `refresh`, `locationId`, `productId`, `includeHidden`, and `countOnly`. Product-view sort accepts `quantityUnavailable`. Filters include `insufficient` and `frozen`.
+- `starshipit_wms_get_inventory` accepts `forMovement` and reports `quantityMovable` on the ledger. `canonical=true` still takes precedence.
+- `starshipit_wms_whoami` includes `safetyStock` on the sample product.
+
+**Products**
+
+- Create, update, and bulk update accept `safetyStock` (whole number from 0 to 2147483647). `0` releases the buffer. Omit it on update to keep the current value.
+- Product update accepts `preOrder`. `leadTimeDays` may be `null` to use the account default.
+- Product reads show each `productCommerceLinks` entry with its id and `writebackDisabled`.
+- `commerceWritebackDisabledByProvider` still changes writeback for every store of one provider.
+- `commerceWritebackDisabledByLinkId` changes one commerce connection. The key is `productCommerceLinks.id`.
+
+**Shopify inventory writeback**
+
+- New write tool: `starshipit_wms_push_shopify_inventory`. It queues `POST /api/shopify/inventory-sync` for one product.
+- The product can be identified by product id, SKU, barcode, or title. Several matches queue nothing and return the candidates.
+- This pushes the current WMS quantity to Shopify. Catalogue import remains `starshipit_wms_sync_products_shopify`.
+- Write-enabled servers now register 87 tools. Read-only mode is unchanged at 38 tools.
+
+The vendored API snapshot in `docs/wms-reference.json` is the 26 October 2026 reference. `commerceWritebackDisabledByLinkId` and `/api/shopify/inventory-sync` are taken from the WMS UI and are not in that snapshot yet.
 
 ## License
 

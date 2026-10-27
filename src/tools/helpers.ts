@@ -73,11 +73,13 @@ export function wrapList(
   items: unknown[],
   responseFormat: ResponseFormat,
   title: string,
-  page?: number
+  page?: number,
+  extra?: Record<string, unknown>
 ): { output: ToolOutput; markdown: string; responseFormat: ResponseFormat } {
   const output: ToolOutput = {
     [itemsKey]: items,
-    ...paginationFromWms(data, page)
+    ...paginationFromWms(data, page),
+    ...extra
   };
   return {
     output,

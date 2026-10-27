@@ -19,6 +19,7 @@ Args:
 
 Returns:
   Whether the key can read inventory, plus the first product summary if present.
+  sample_product.safetyStock is the Shopify buffer, or null when unset.
 
 Use when: confirming your MCP client is authenticated before other tools.
 Do not use when: you already have a product ID and need stock detail (use starshipit_wms_get_inventory).
@@ -39,7 +40,13 @@ Error Handling:
         connected: true,
         can_read_inventory: true,
         sample_product: first
-          ? { id: first.id, sku: first.sku, name: first.name, quantityAvailable: first.quantityAvailable }
+          ? {
+              id: first.id,
+              sku: first.sku,
+              name: first.name,
+              quantityAvailable: first.quantityAvailable,
+              safetyStock: first.safetyStock ?? null
+            }
           : null,
         total_count: record.totalCount ?? null
       }, params.response_format ?? ResponseFormat.MARKDOWN, "WMS Connection");
